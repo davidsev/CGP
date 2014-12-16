@@ -31,7 +31,11 @@ class Type_GenericIO extends Type_Base {
 					$rrdgraph[] = sprintf('CDEF:avg_%s=avg_%1$s_raw,%s,*', crc32hex($sources[$i]), $this->scale);
 					$rrdgraph[] = sprintf('CDEF:max_%s=max_%1$s_raw,%s,*', crc32hex($sources[$i]), $this->scale);
 					if ($i == 1)
+					{
 						$rrdgraph[] = sprintf('CDEF:avg_%s_neg=avg_%1$s_raw,%s%s,*', crc32hex($sources[$i]), $this->negative_io ? '-' : '', $this->scale);
+						$rrdgraph[] = sprintf('CDEF:max_%s_neg=max_%1$s_raw,%s%s,*', crc32hex($sources[$i]), $this->negative_io ? '-' : '', $this->scale);
+						$rrdgraph[] = sprintf('CDEF:min_%s_neg=min_%1$s_raw,%s%s,*', crc32hex($sources[$i]), $this->negative_io ? '-' : '', $this->scale);
+					}
 					$rrdgraph[] = sprintf('VDEF:tot_%1$s=avg_%1$s,TOTAL', crc32hex($sources[$i]));
 					if ($this->percentile)
 						$rrdgraph[] = sprintf('VDEF:pct_%1$s=avg_%1$s,%2$s,PERCENT', crc32hex($sources[$i]), $this->percentile);
@@ -40,21 +44,13 @@ class Type_GenericIO extends Type_Base {
 			}
 		}
 
-		$rrdgraph[] = sprintf('CDEF:overlap=avg_%s,avg_%s_neg,LT,avg_%1$s,avg_%2$s_neg,IF',
-						crc32hex($sources[0]), crc32hex($sources[1]));
-
 		$i = 0;
 		foreach($sources as $source) {
-			$rrdgraph[] = sprintf('AREA:avg_%s%s#%s', crc32hex($source), $i == 1 ? '_neg' : '', $this->get_faded_color($this->colors[$source]));
+			//++//$rrdgraph[] = sprintf('AREA:avg_%s%s#%s', crc32hex($source), $i == 1 ? '_neg' : '', $this->get_faded_color($this->colors[$source]));
+			$rrdgraph[] = sprintf('AREA:max_%s%s#%s', crc32hex($source), $i == 1 ? '_neg' : '', $this->get_faded_color($this->colors[$source]));
+			$rrdgraph[] = sprintf('AREA:min_%s%s#%s', crc32hex($source), $i == 1 ? '_neg' : '', 'ffffff');
 			$i++;
 		}
-
-		$rrdgraph[] = sprintf('AREA:overlap#%s',
-			$this->get_faded_color(
-				$this->get_faded_color($this->colors[$sources[0]]),
-				$this->get_faded_color($this->colors[$sources[1]])
-			)
-		);
 
 		$i = 0;
 		foreach($sources as $source) {
@@ -77,6 +73,8 @@ class Type_GenericIO extends Type_Base {
 			}
 		}
 
+		$rrdgraph[] = 'HRULE:0#000000';
+		
 		return $rrdgraph;
 	}
 }
