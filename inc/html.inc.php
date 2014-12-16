@@ -46,6 +46,14 @@ EOT;
 EOT;
 	}
 
+	if ($CONFIG['showtime']) {
+		echo <<<EOT
+	<script type="text/javascript" src="{$html_weburl}js/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="{$html_weburl}js/jquery.timeago.js"></script>
+
+EOT;
+	}
+
 echo <<<EOT
 </head>
 <body>
@@ -294,6 +302,20 @@ function host_summary($cat, $hosts) {
 			printf('<td class="%s">%d seconds ago</td>',$class, $time);
 		}
 
+		if ($CONFIG['showtime']) {
+			$rrd_info = $rrd->rrd_info($CONFIG['datadir'].'/'.$host.'/load/load.rrd');
+			$time = time() - $rrd_info['last_update'];
+
+			$class = 'wide';
+			if ($time > 300)
+				$class .= ' crit';
+			elseif ($time > 60)
+				$class .= ' warn';
+
+			printf('<td class="%s"><time class="timeago" datetime="%s">%d seconds ago</time></td>',
+				$class, date('c', $rrd_info['last_update']), $time);
+		}
+
 		print "</tr>\n";
 	}
 
@@ -351,15 +373,7 @@ function graphs_from_plugin($host, $plugin, $overview=false) {
 			isset($items['t']) ? $_GET['t'] = $items['t'] : $_GET['t'] = '';
 			isset($items['ti']) ? $_GET['ti'] = $items['ti'] : $_GET['ti'] = '';
 			$_GET['s'] = $time;
-			$uuid = generate_uuid();
-			printf('<canvas id="%s" class="rrd">', $uuid);
 			include $CONFIG['webdir'].'/graph.php';
-			print '</canvas>';
-			printf('<a href="%s%s"><img id="%s-img" alt="graph"></a>'."\n",
-				htmlentities($CONFIG['weburl']),
-				htmlentities(build_url('detail.php', $items, $time)),
-				$uuid
-			);
 		} else {
 			printf('<a href="%1$s%2$s"><img src="%1$s%3$s"></a>'."\n",
 				htmlentities($CONFIG['weburl']),
